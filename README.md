@@ -15,7 +15,8 @@ O objetivo é permitir a realização de experimentos de desempenho de forma sis
 │
 └── scripts/
     ├── coleta.py
-    └── analise.py
+    ├── analise.py
+    └── comparacao.py
 ```
 
 O diretório `src` contém as implementações em C e o `Makefile` utilizado para compilá-las.
@@ -221,6 +222,113 @@ Entre as análises realizadas estão:
 
 Os possíveis outliers são identificados, mas **não são automaticamente removidos das análises**.
 
+## Comparação entre implementações
+
+O script `comparacao.py` compara duas implementações utilizando as observações pareadas produzidas pela coleta intercalada.
+
+A comparação é feita por **rodada e tamanho do problema**. Para cada rodada são associados os tempos da implementação de referência e da implementação comparada.
+
+Para cada par é calculada a diferença:
+
+$$
+D_i = T_{\text{referencia},i} - T_{\text{comparada},i}
+$$
+
+e o speedup:
+
+$$
+S_i = \frac{T_{\text{referencia},i}}{T_{\text{comparada},i}}
+$$
+
+Com essa definição:
+
+- `D > 0` indica menor tempo para a implementação comparada;
+- `S > 1` indica que a implementação comparada é mais rápida;
+- `S = 1` indica tempos equivalentes;
+- `S < 1` indica vantagem para a implementação de referência.
+
+### Exemplo
+
+Para comparar `distancia_avx` com `distancia_naive`, utilizando `distancia_naive` como referência:
+
+```bash
+python3 comparacao.py coleta.csv \
+    --referencia distancia_naive \
+    --comparada distancia_avx \
+    --tamanhos 1000 10000 100000 1000000 10000000
+```
+
+Nesse caso, o speedup é calculado como:
+
+$$
+S = \frac{T_{\text{naive}}}{T_{\text{avx}}}
+$$
+
+Portanto, um speedup maior que 1 representa vantagem para `distancia_avx`.
+
+### Análises realizadas
+
+Para cada tamanho de problema, o script realiza:
+
+- formação dos pares por rodada;
+- verificação de pares ausentes ou duplicados;
+- cálculo da diferença média e mediana entre os tempos;
+- cálculo do speedup;
+- intervalo de confiança de 95% por bootstrap pareado;
+- teste t pareado;
+- teste de permutação pareado;
+- cálculo do tamanho de efeito $d_z$;
+- geração de gráfico dos tempos médios;
+- geração de gráfico de speedup com IC95%;
+- boxplot das diferenças pareadas.
+
+O bootstrap é realizado preservando os pares, isto é, cada reamostragem mantém juntas as observações da implementação de referência e da implementação comparada pertencentes à mesma rodada.
+
+### Registro da comparação
+
+A cada execução, o script cria um diretório no formato:
+
+```text
+Registro-Comparacao-AAAAMMDD-HHMMSS/
+```
+
+Por exemplo:
+
+```text
+Registro-Comparacao-20260824-171542/
+```
+
+O diretório contém:
+
+```text
+Registro-Comparacao-20260824-171542/
+├── coleta.csv
+├── comparacao.py
+├── pares.csv
+├── comparacao.csv
+├── tempos_medios.jpg
+├── speedup.jpg
+├── diferencas.jpg
+└── relatorio_comparacao.tex
+```
+
+O arquivo `pares.csv` preserva as observações pareadas utilizadas na comparação.
+
+O arquivo `comparacao.csv` contém os resultados estatísticos por tamanho de problema.
+
+O arquivo `relatorio_comparacao.tex` contém o relatório completo da comparação e pode ser compilado com:
+
+```bash
+pdflatex relatorio_comparacao.tex
+pdflatex relatorio_comparacao.tex
+```
+
+O resultado será:
+
+```text
+relatorio_comparacao.pdf
+```
+
 ## Registro das análises
 
 A cada execução, `analise.py` cria um diretório com nome no formato:
@@ -328,6 +436,20 @@ src/distancia_avx.c ───┘
                             |
                             v
                       relatorio.tex
+
+                        coleta.csv
+                            |
+                            v
+                  scripts/comparacao.py
+                            |
+                            v
+          Registro-Comparacao-AAAAMMDD-HHMMSS
+                            |
+                            v
+             comparação pareada + speedup
+                            |
+                            v
+               relatorio_comparacao.tex
 ```
 
 Dessa forma, os dados brutos permanecem associados aos resultados estatísticos e ao relatório produzido a partir deles.
