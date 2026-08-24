@@ -1,0 +1,28 @@
+# Executáveis
+src/distancia_naive
+src/distancia_avx
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Dados gerados pelas coletas
+scripts/coleta.csv
+scripts/coleta.log
+
+# Registros das análises
+scripts/Registro-*/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Sistema/editor
+.DS_Store
+*~
