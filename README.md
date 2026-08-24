@@ -136,9 +136,9 @@ Nesse exemplo existem:
 
 Portanto, são realizados:
 
-\[
+$$
 2 \times 5 \times 30 = 300
-\]
+$$
 
 lançamentos dos programas.
 
